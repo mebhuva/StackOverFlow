@@ -2,9 +2,13 @@ package com.pnc.StackOverflow.Controllers;
 
 import com.pnc.StackOverflow.Entities.Answer;
 import com.pnc.StackOverflow.Entities.Question;
+import com.pnc.StackOverflow.Entities.User;
+import com.pnc.StackOverflow.ExceptionHandling.StackOverflowException;
+import com.pnc.StackOverflow.Security.JWTHandler;
 import com.pnc.StackOverflow.Service.AnswerService;
 import com.pnc.StackOverflow.Service.QuestionServiceImpl;
 import com.pnc.StackOverflow.Service.SequenceGeneratorService;
+import com.pnc.StackOverflow.Service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +28,13 @@ public class AnswerController {
     private SequenceGeneratorService sequenceGeneratorService;
     @Autowired
     MongoTemplate mongoTemplate;
+    @Autowired
+    UserServiceImpl userServiceimpl;
+    @Autowired
+    JWTHandler jwtHandler;
 
     @GetMapping("/{questionId}")
-    public List<Answer> getAll(@PathVariable String questionId) {
+    public List<Answer> getAll(@PathVariable String questionId,@RequestHeader String token) {
         Optional<Question> question  =  answerService.getAnswers(questionId);
         if(question.isPresent()) {
             Question newQuestion = question.get();
@@ -40,9 +48,9 @@ public class AnswerController {
     }
 
     @PostMapping("/{questionId}/addAnswer")
-    public void addAnswer(@PathVariable String questionId , @RequestBody Answer answer){
+    public void addAnswer(@PathVariable String questionId , @RequestBody Answer answer, @RequestHeader String token) throws StackOverflowException {
 
-        Optional<Question> question = questionServiceImpl.getQuestion(questionId);
+        Optional<Question> question = questionServiceImpl.getQuestion(questionId,token);
 
         if(question.isPresent()){
             Question newQuestion = question.get();
@@ -55,16 +63,27 @@ public class AnswerController {
                 newansList.add(answer);
                 newQuestion.setAnswers(newansList);
             }
-            questionServiceImpl.createQuestions(newQuestion);
+            if(answer.getUser() == null) {
+                Optional<User> user = userServiceimpl.findUserByUserId(jwtHandler.getUsernameFromToken(token));
+                if (user.isPresent()) {
+                    User userinfo = user.get();
+                    System.out.println(user.toString());
+                    answer.setUser(userinfo);
+
+                } else {
+                    throw new StackOverflowException(1014, "User not found");
+                }
+            }
+            questionServiceImpl.createQuestions(newQuestion,token);
         }
 
 
     }
 
     @PostMapping("/{questionId}/{answerId}/answerUpdate")
-    public void addAnswer(@PathVariable String questionId ,@PathVariable long answerId, @RequestBody Answer answerin){
+    public void addAnswer(@PathVariable String questionId ,@PathVariable long answerId, @RequestBody Answer answerin,@RequestHeader String token) throws StackOverflowException {
 
-        Optional<Question> question = questionServiceImpl.getQuestion(questionId);
+        Optional<Question> question = questionServiceImpl.getQuestion(questionId,token);
 
 
         if(question.isPresent()) {
@@ -74,7 +93,7 @@ public class AnswerController {
             if (answer.isPresent()) {
                 Answer newAnswer = answer.get();
                 newAnswer.setAnswer(answerin.getAnswer());
-                questionServiceImpl.createQuestions(newQuestion);
+                questionServiceImpl.createQuestions(newQuestion,token);
             }
         }
 

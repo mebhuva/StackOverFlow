@@ -5,18 +5,24 @@ import com.pnc.StackOverflow.ExceptionHandling.ResponseMessage;
 import com.pnc.StackOverflow.ExceptionHandling.StackOverflowException;
 import com.pnc.StackOverflow.Models.LoginRequest;
 import com.pnc.StackOverflow.Service.UserServiceImpl;
+import org.apache.juli.logging.Log;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/StackOverflow")
 public class UserController<UserService> {
+    private static final Logger LOGGER = LogManager.getLogger(UserController.class);
     @Autowired
     UserServiceImpl userService;
     public User findUser(String email)
@@ -26,34 +32,37 @@ public class UserController<UserService> {
 
     @PostMapping(value = "login")
     public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
-
-        try {
-            userService.login(loginRequest.getEmail(),loginRequest.getPassword());
-        } catch(StackOverflowException ke) {
-            return new ResponseEntity(new ResponseMessage(ke.getStatusCode(),ke.getMessage()), HttpStatus.BAD_REQUEST);
-        } catch(Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        try{
+            LOGGER.info("LOGIN: User has entered Email and Password");
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("token",userService.login(loginRequest));
+            LOGGER.info("LOGIN: Successful");
+            return new ResponseEntity(responseHeaders,HttpStatus.OK);
+        }catch(StackOverflowException e){
+            LOGGER.info("LOGIN: Error invalid email and password combination");
+            return new ResponseEntity(new ResponseMessage(e.getStatusCode(),e.getMessage()), HttpStatus.BAD_REQUEST);
+            //return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity(HttpStatus.OK);
+
+
+
 
     }
 
     @PostMapping(value = "user")
     public ResponseEntity register(@RequestBody User user)
     {
-        try
-        {
+        System.out.println(user.toString());
+        try {
+            LOGGER.info("Post(start): Register form has been submitted");
             userService.register(user);
+            LOGGER.info(String.format("Post(end): User is registered with UserId: %s", user.getId()) );
+        }catch (StackOverflowException e){
+            return new ResponseEntity(new ResponseMessage(e.getStatusCode(),e.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
-        catch(StackOverflowException koe)
-        {
-            return new ResponseEntity(new ResponseMessage(koe.getStatusCode(),koe.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        catch(Exception e)
-        {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.CREATED);
     }
 
     @PutMapping(value="user")

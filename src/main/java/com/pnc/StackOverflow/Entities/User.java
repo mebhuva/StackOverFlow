@@ -1,5 +1,6 @@
 package com.pnc.StackOverflow.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -12,7 +13,7 @@ public class User extends AbstractDocument{
     private String email;
     private String password;
     private String description;
-    //@JsonIgnore
+    @JsonIgnore
     private boolean isActive;
 
     public User() {

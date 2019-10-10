@@ -19,8 +19,26 @@ public class Answer{
     @Id
     private long id;
     private String answer;
+    private List<User> Likes;
+    private List<Comment> comments;
 
-   private List<Comment> comments;
+    private User user;
+
+    public List<User> getLikes() {
+        return Likes;
+    }
+
+    public void setLikes(List<User> likes) {
+        Likes = likes;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     public List<Comment> getComments() {
         return comments;

@@ -15,9 +15,9 @@ public class Question extends AbstractDocument {
     private int view;
 
     private int answerCount;
-
+    private List<User> Likes;
     private String title;
-
+    private User user;
     private List<Answer> answers;
 
     private List<Comment> comments;
@@ -30,6 +30,22 @@ public class Question extends AbstractDocument {
         this.answerCount = answerCount;
         this.title = title;
         this.answers = answers;
+    }
+
+    public List<User> getLikes() {
+        return Likes;
+    }
+
+    public void setLikes(List<User> likes) {
+        Likes = likes;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public int getView() {
@@ -73,28 +89,14 @@ public class Question extends AbstractDocument {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Question)) return false;
-        Question question = (Question) o;
-        return getView() == question.getView() &&
-                getAnswerCount() == question.getAnswerCount() &&
-                Objects.equals(getTitle(), question.getTitle()) &&
-                Objects.equals(getAnswers(), question.getAnswers());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getView(), getAnswerCount(), getTitle(), getAnswers());
-    }
-
-    @Override
     public String toString() {
         return "Question{" +
                 "view=" + view +
                 ", answerCount=" + answerCount +
                 ", title='" + title + '\'' +
+                ", user=" + user +
                 ", answers=" + answers +
+                ", comments=" + comments +
                 '}';
     }
 }
